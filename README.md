@@ -1,5 +1,5 @@
 # CS5470 - HW1: vLLM Benchmarking and Profiling
-**Due Date:** Sep 18 11:59PM 
+**Due Date:** Sep 19 11:59PM 
 
 Please start this assignment as early as possible!
 
