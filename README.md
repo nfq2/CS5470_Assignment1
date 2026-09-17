@@ -16,6 +16,8 @@ This homework focuses on setting up and benchmarking the vLLM inference server (
 ### Hardware Access
 You will be provided access to the **Perlmutter HPC** where you can reserve a server with 4 A100 GPUs, each having 40 GB of memory.
 
+**Warning**: Do not unsubscribe from the NERSC email list. Doing so will automatically close your account, and you will have to go through the painful ticket process of reinstating it.
+
 ### Setup Instructions
 
 #### Step 1: Setup Conda and VLLM
