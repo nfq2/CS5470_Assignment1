@@ -29,7 +29,13 @@ The required ratios are TTFT p99(TP2)/p99(TP1) = **0.602**, TTFT p99(TP4)/p99(TP
 
 ## Task 3: Performance Visualization
 
-The baseline data is available. The sorted TTFT and TPOT plots are pending.
+Each curve sorts that configuration's 200 request latencies independently, so the x-axis shows latency rank rather than the requests' original order.
+
+![Sorted time to first token for 1, 2, and 4 GPUs](figures/ttft_sorted.png)
+
+![Sorted time per output token for 1, 2, and 4 GPUs](figures/tpot_sorted.png)
+
+TTFT is lower with more GPUs for most requests. All three curves rise sharply at the slowest few requests, but the TP4 tail is much shorter: its p99 TTFT is 388.95 ms versus 1190.52 ms for TP1. TPOT also falls with more GPUs. The TP4 curve stays near 20 ms for most requests, while TP1 is mostly between about 30 and 50 ms and reaches a higher tail. These plots show improved latency across the workload; they do not identify the cause of individual slow requests.
 
 ## Task 4: NVIDIA Nsight Profiling
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Summarize a CS5470 benchmark run and update answers.json.
+"""Summarize CS5470 benchmark runs and generate the latency figures.
 
 Usage: python3 analyze.py --run tp1
+       python3 analyze.py --run tp4 --plots
 The result file is selected by its `run` metadata, not by its filename alone.
 """
 
@@ -57,7 +58,8 @@ def gpu_blocks(log_path):
     return None
 
 
-def summarize(data):
+def request_latencies_ms(data):
+    """Return successful requests' TTFT and per-request TPOT in milliseconds."""
     ttfts = data["ttfts"]
     itls = data["itls"]
     errors = data["errors"]
@@ -77,6 +79,11 @@ def summarize(data):
     ]
     if not tpot_ms:
         raise ValueError("No request has inter-token latencies")
+    return ttft_ms, tpot_ms
+
+
+def summarize(data):
+    ttft_ms, tpot_ms = request_latencies_ms(data)
     return {
         "ttft_p50_ms": percentile(ttft_ms, 50),
         "ttft_p99_ms": percentile(ttft_ms, 99),
@@ -87,6 +94,45 @@ def summarize(data):
     }
 
 
+def plot_latencies(results_dir, config, figure_dir):
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError as exc:
+        raise RuntimeError("Plotting requires matplotlib; install it or run without --plots") from exc
+
+    series = {}
+    for run in ("tp1", "tp2", "tp4"):
+        _, data = select_result(results_dir, run, config)
+        series[run] = request_latencies_ms(data)
+
+    figure_dir.mkdir(parents=True, exist_ok=True)
+    styles = (
+        ("tp1", "1 GPU (TP1)", "#225ea8"),
+        ("tp2", "2 GPUs (TP2)", "#d95f0e"),
+        ("tp4", "4 GPUs (TP4)", "#238b45"),
+    )
+    for metric_index, filename, ylabel, title in (
+        (0, "ttft_sorted.png", "TTFT (ms)", "Sorted time to first token"),
+        (1, "tpot_sorted.png", "TPOT (ms)", "Sorted time per output token"),
+    ):
+        fig, ax = plt.subplots(figsize=(8, 4.5), constrained_layout=True)
+        for run, label, color in styles:
+            values = sorted(series[run][metric_index])
+            ax.plot(range(1, len(values) + 1), values, label=label,
+                    color=color, linewidth=2)
+        ax.set(title=title, xlabel="Prompt index (sorted by latency)", ylabel=ylabel)
+        ax.set_xlim(left=1)
+        ax.set_ylim(bottom=0)
+        ax.grid(axis="y", alpha=0.25)
+        ax.legend(loc="upper left", frameon=False)
+        path = figure_dir / filename
+        fig.savefig(path, dpi=240)
+        plt.close(fig)
+        print(f"Wrote {path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run", choices=("tp1", "tp2", "tp4"), required=True)
@@ -94,6 +140,8 @@ def main():
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--answers", type=Path, default=Path("answers.json"))
     parser.add_argument("--log", type=Path, help="Server log (default: vllm_server_<run>.log)")
+    parser.add_argument("--plots", action="store_true", help="Generate sorted TTFT and TPOT plots from TP1, TP2, and TP4")
+    parser.add_argument("--figure-dir", type=Path, default=Path("figures"))
     args = parser.parse_args()
 
     with args.config.open() as file:
@@ -125,6 +173,8 @@ def main():
     print(json.dumps(metrics, indent=2))
     if blocks is None:
         print(f"GPU KV cache block count was not found in {log_path}; add it when available.")
+    if args.plots:
+        plot_latencies(args.results, config, args.figure_dir)
 
 
 if __name__ == "__main__":
