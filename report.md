@@ -17,11 +17,19 @@ The run completed 3.79 requests per second and generated 1609.82 output tokens p
 
 ## Task 2: Multi-GPU Benchmark
 
-To be completed after the 2-GPU and 4-GPU runs.
+I ran the same assigned workload with tensor parallel sizes 2 and 4. All 200 requests completed in each run. The model, request rate, prompt count, and server batching settings stayed the same.
+
+| GPUs | TTFT p50 (ms) | TTFT p99 (ms) | TPOT p50 (ms) | TPOT p99 (ms) | Output tokens/s |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 94.98 | 1190.52 | 42.60 | 56.50 | 1609.82 |
+| 2 | 59.09 | 717.15 | 25.06 | 33.55 | 1868.15 |
+| 4 | 46.73 | 388.95 | 20.33 | 22.29 | 1939.08 |
+
+The required ratios are TTFT p99(TP2)/p99(TP1) = **0.602**, TTFT p99(TP4)/p99(TP1) = **0.327**, and TPOT p50(TP4)/p50(TP1) = **0.477**. Lower ratios mean shorter delays. Output throughput increased by about 16.0% from one to two GPUs, then 3.8% from two to four GPUs; latency improved more than aggregate throughput in the four-GPU run.
 
 ## Task 3: Performance Visualization
 
-To be completed after all three baseline runs.
+The baseline data is available. The sorted TTFT and TPOT plots are pending.
 
 ## Task 4: NVIDIA Nsight Profiling
 
@@ -29,4 +37,4 @@ To be completed after profiling the 4-GPU server.
 
 ## Task 5: Experiment
 
-To be completed after comparing the scaling results.
+The scaling results are available. The hypothesis, probe run, and conclusion are pending.

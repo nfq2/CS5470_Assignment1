@@ -10,6 +10,29 @@
       "output_throughput_tok_s": 1609.8194809573474,
       "request_throughput_req_s": 3.7924060472274577,
       "gpu_kv_cache_blocks": 10203
+    },
+    "tp2": {
+      "ttft_p50_ms": 59.08733050455339,
+      "ttft_p99_ms": 717.1505965509267,
+      "tpot_p50_ms": 25.06377587604172,
+      "tpot_p99_ms": 33.54601984973134,
+      "output_throughput_tok_s": 1868.1455605295691,
+      "request_throughput_req_s": 4.400969552586238,
+      "gpu_kv_cache_blocks": 27637
+    },
+    "tp4": {
+      "ttft_p50_ms": 46.73181800171733,
+      "ttft_p99_ms": 388.9518508393656,
+      "tpot_p50_ms": 20.325535049762166,
+      "tpot_p99_ms": 22.29044115778524,
+      "output_throughput_tok_s": 1939.0836687536241,
+      "request_throughput_req_s": 4.568085253315486,
+      "gpu_kv_cache_blocks": 61590
     }
+  },
+  "scaling": {
+    "ttft_p99_ratio_tp2_over_tp1": 0.602383995882411,
+    "ttft_p99_ratio_tp4_over_tp1": 0.3267073488348391,
+    "tpot_p50_ratio_tp4_over_tp1": 0.47713304389015276
   }
 }
