@@ -55,5 +55,15 @@
     ],
     "allreduce_kernel_name": "void vllm::cross_device_reduce_1stage<__nv_bfloat16, (int)4>(vllm::RankData *, vllm::RankSignals, vllm::Signal *, T1 *, int, int)",
     "allreduce_pct_of_kernel_time": 69.6
+  },
+  "probe": {
+    "hypothesis_id": "H2",
+    "tp": 4,
+    "knob_changed": "max_num_batched_tokens",
+    "baseline_value": 2048,
+    "new_value": 4096,
+    "ttft_p99_ms": 321.5772189751431,
+    "tpot_p50_ms": 20.787292982705644,
+    "supports_hypothesis": true
   }
 }

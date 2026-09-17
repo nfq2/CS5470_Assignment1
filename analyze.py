@@ -4,6 +4,7 @@
 Usage: python3 analyze.py --run tp1
        python3 analyze.py --run tp4 --plots
        python3 analyze.py --run tp4 --profile-csv profile/cuda_gpu_kern_sum.csv
+       python3 analyze.py --run probe
 The result file is selected by its `run` metadata, not by its filename alone.
 """
 
@@ -168,7 +169,7 @@ def plot_latencies(results_dir, config, figure_dir):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--run", choices=("tp1", "tp2", "tp4"), required=True)
+    parser.add_argument("--run", choices=("tp1", "tp2", "tp4", "probe"), required=True)
     parser.add_argument("--config", type=Path, default=Path("config.json"))
     parser.add_argument("--results", type=Path, default=Path("results"))
     parser.add_argument("--answers", type=Path, default=Path("answers.json"))
@@ -176,6 +177,8 @@ def main():
     parser.add_argument("--plots", action="store_true", help="Generate sorted TTFT and TPOT plots from TP1, TP2, and TP4")
     parser.add_argument("--figure-dir", type=Path, default=Path("figures"))
     parser.add_argument("--profile-csv", type=Path, help="Nsight CUDA GPU kernel summary CSV")
+    parser.add_argument("--probe-script", type=Path, default=Path("probe.sh"),
+                        help="H2 server script used for the probe run")
     args = parser.parse_args()
 
     with args.config.open() as file:
@@ -194,14 +197,33 @@ def main():
             raise ValueError(f"{args.answers} belongs to another configuration")
     else:
         answers = {"netid": config["netid"], "cfg_hash": config["cfg_hash"]}
-    answers.setdefault("baseline", {})[args.run] = metrics
-    if all(run in answers["baseline"] for run in ("tp1", "tp2", "tp4")):
-        baseline = answers["baseline"]
-        answers["scaling"] = {
-            "ttft_p99_ratio_tp2_over_tp1": baseline["tp2"]["ttft_p99_ms"] / baseline["tp1"]["ttft_p99_ms"],
-            "ttft_p99_ratio_tp4_over_tp1": baseline["tp4"]["ttft_p99_ms"] / baseline["tp1"]["ttft_p99_ms"],
-            "tpot_p50_ratio_tp4_over_tp1": baseline["tp4"]["tpot_p50_ms"] / baseline["tp1"]["tpot_p50_ms"],
+    if args.run == "probe":
+        baseline_tp4 = answers.get("baseline", {}).get("tp4")
+        if baseline_tp4 is None:
+            raise ValueError("Analyze the TP4 baseline before the probe")
+        script = args.probe_script.read_text()
+        match = re.search(r"--max-num-batched-tokens\s+(\d+)", script)
+        if match is None:
+            raise ValueError(f"No max-num-batched-tokens setting found in {args.probe_script}")
+        answers["probe"] = {
+            "hypothesis_id": "H2",
+            "tp": 4,
+            "knob_changed": "max_num_batched_tokens",
+            "baseline_value": config["max_num_batched_tokens"],
+            "new_value": int(match.group(1)),
+            "ttft_p99_ms": metrics["ttft_p99_ms"],
+            "tpot_p50_ms": metrics["tpot_p50_ms"],
+            "supports_hypothesis": metrics["ttft_p99_ms"] < baseline_tp4["ttft_p99_ms"],
         }
+    else:
+        answers.setdefault("baseline", {})[args.run] = metrics
+        if all(run in answers["baseline"] for run in ("tp1", "tp2", "tp4")):
+            baseline = answers["baseline"]
+            answers["scaling"] = {
+                "ttft_p99_ratio_tp2_over_tp1": baseline["tp2"]["ttft_p99_ms"] / baseline["tp1"]["ttft_p99_ms"],
+                "ttft_p99_ratio_tp4_over_tp1": baseline["tp4"]["ttft_p99_ms"] / baseline["tp1"]["ttft_p99_ms"],
+                "tpot_p50_ratio_tp4_over_tp1": baseline["tp4"]["tpot_p50_ms"] / baseline["tp1"]["tpot_p50_ms"],
+            }
     if args.profile_csv:
         answers["profile"] = summarize_profile(args.profile_csv)
     args.answers.write_text(json.dumps(answers, indent=2) + "\n")

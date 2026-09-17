@@ -53,4 +53,6 @@ The first kernel is vLLM's AllReduce operation for communication among the four 
 
 ## Task 5: Experiment
 
-The scaling results are available. The hypothesis, probe run, and conclusion are pending.
+Output throughput improved only 3.8% from TP2 to TP4, the weakest step in scaling. At TP4, p99 TTFT was 388.95 ms versus a 46.73 ms median; the 16,000-token prompt and requests immediately after it had the highest TTFTs. I chose H2: the 2,048-token prefill batch limit may spread long prompts over too many scheduler steps. I ran a TP4 probe with `--max-num-batched-tokens 4096`, keeping the assigned client workload and other server settings fixed. All 200 requests completed. The probe reduced p99 TTFT from 388.95 to 321.58 ms (17.3%), while p50 TPOT rose from 20.33 to 20.79 ms (2.3%) and output throughput fell from 1,939.08 to 1,913.58 tokens/s (1.3%). This supports H2 as a contributor to the TTFT tail, but the change did not improve the weak throughput scaling. One run per setting cannot establish how much of the difference was due to run-to-run variation.
+
+The most difficult part was collecting a usable multi-GPU Nsight trace. Earlier captures produced reports without CUDA kernel data; starting collection before sending requests and checking its state yielded a trace with GPU kernels. The resulting AllReduce kernel dominated recorded GPU kernel time, even though the probe showed that increasing the prefill batch limit helped the TTFT tail.
