@@ -1,0 +1,12 @@
+{
+  "netid": "nfq2",
+  "cfg_hash": "7034f168",
+  "seed": 39795,
+  "request_rate": 8,
+  "num_prompts": 200,
+  "long_prompts": 5,
+  "long_prompt_len": 16000,
+  "max_num_batched_tokens": 2048,
+  "max_num_seqs": 128,
+  "model": "meta-llama/Llama-3.1-8B"
+}

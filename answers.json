@@ -1,0 +1,15 @@
+{
+  "netid": "nfq2",
+  "cfg_hash": "7034f168",
+  "baseline": {
+    "tp1": {
+      "ttft_p50_ms": 94.97862943680957,
+      "ttft_p99_ms": 1190.5206669715687,
+      "tpot_p50_ms": 42.59930287796538,
+      "tpot_p99_ms": 56.4995178679374,
+      "output_throughput_tok_s": 1609.8194809573474,
+      "request_throughput_req_s": 3.7924060472274577,
+      "gpu_kv_cache_blocks": 10203
+    }
+  }
+}
