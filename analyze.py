@@ -3,10 +3,12 @@
 
 Usage: python3 analyze.py --run tp1
        python3 analyze.py --run tp4 --plots
+       python3 analyze.py --run tp4 --profile-csv profile/cuda_gpu_kern_sum.csv
 The result file is selected by its `run` metadata, not by its filename alone.
 """
 
 import argparse
+import csv
 import json
 import math
 import re
@@ -94,6 +96,37 @@ def summarize(data):
     }
 
 
+def summarize_profile(path):
+    with path.open(newline="") as file:
+        rows = list(csv.DictReader(file))
+    if not rows:
+        raise ValueError(f"No GPU kernels found in {path}")
+    kernels = sorted(rows, key=lambda row: int(row["Total Time (ns)"]), reverse=True)
+    total_time = sum(int(row["Total Time (ns)"]) for row in kernels)
+    if total_time <= 0:
+        raise ValueError(f"No GPU kernel time found in {path}")
+
+    def kernel_record(row):
+        time_ns = int(row["Total Time (ns)"])
+        return {
+            "name": row["Name"],
+            "total_time_ns": time_ns,
+            "pct_of_kernel_time": round(100 * time_ns / total_time, 1),
+        }
+
+    allreduce = next(
+        (row for row in kernels if re.search(r"all.?reduce|cross_device_reduce", row["Name"], re.I)),
+        None,
+    )
+    if allreduce is None:
+        raise ValueError(f"No AllReduce kernel found in {path}")
+    return {
+        "top3_kernels": [kernel_record(row) for row in kernels[:3]],
+        "allreduce_kernel_name": allreduce["Name"],
+        "allreduce_pct_of_kernel_time": kernel_record(allreduce)["pct_of_kernel_time"],
+    }
+
+
 def plot_latencies(results_dir, config, figure_dir):
     try:
         import matplotlib
@@ -142,6 +175,7 @@ def main():
     parser.add_argument("--log", type=Path, help="Server log (default: vllm_server_<run>.log)")
     parser.add_argument("--plots", action="store_true", help="Generate sorted TTFT and TPOT plots from TP1, TP2, and TP4")
     parser.add_argument("--figure-dir", type=Path, default=Path("figures"))
+    parser.add_argument("--profile-csv", type=Path, help="Nsight CUDA GPU kernel summary CSV")
     args = parser.parse_args()
 
     with args.config.open() as file:
@@ -168,6 +202,8 @@ def main():
             "ttft_p99_ratio_tp4_over_tp1": baseline["tp4"]["ttft_p99_ms"] / baseline["tp1"]["ttft_p99_ms"],
             "tpot_p50_ratio_tp4_over_tp1": baseline["tp4"]["tpot_p50_ms"] / baseline["tp1"]["tpot_p50_ms"],
         }
+    if args.profile_csv:
+        answers["profile"] = summarize_profile(args.profile_csv)
     args.answers.write_text(json.dumps(answers, indent=2) + "\n")
     print(f"Analyzed {path}")
     print(json.dumps(metrics, indent=2))

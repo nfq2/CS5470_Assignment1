@@ -34,5 +34,26 @@
     "ttft_p99_ratio_tp2_over_tp1": 0.602383995882411,
     "ttft_p99_ratio_tp4_over_tp1": 0.3267073488348391,
     "tpot_p50_ratio_tp4_over_tp1": 0.47713304389015276
+  },
+  "profile": {
+    "top3_kernels": [
+      {
+        "name": "void vllm::cross_device_reduce_1stage<__nv_bfloat16, (int)4>(vllm::RankData *, vllm::RankSignals, vllm::Signal *, T1 *, int, int)",
+        "total_time_ns": 66847922806,
+        "pct_of_kernel_time": 69.6
+      },
+      {
+        "name": "ampere_bf16_s16816gemm_bf16_128x64_sliced1x2_ldg8_f2f_stages_64x6_tn",
+        "total_time_ns": 9590177620,
+        "pct_of_kernel_time": 10.0
+      },
+      {
+        "name": "ampere_bf16_s16816gemm_bf16_64x64_sliced1x2_ldg8_f2f_stages_64x6_tn",
+        "total_time_ns": 5396774850,
+        "pct_of_kernel_time": 5.6
+      }
+    ],
+    "allreduce_kernel_name": "void vllm::cross_device_reduce_1stage<__nv_bfloat16, (int)4>(vllm::RankData *, vllm::RankSignals, vllm::Signal *, T1 *, int, int)",
+    "allreduce_pct_of_kernel_time": 69.6
   }
 }

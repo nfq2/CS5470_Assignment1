@@ -39,7 +39,17 @@ TTFT is lower with more GPUs for most requests. All three curves rise sharply at
 
 ## Task 4: NVIDIA Nsight Profiling
 
-To be completed after profiling the 4-GPU server.
+I profiled Llama-3.1-8B with tensor parallel size 4 while serving three sequential, identical completion requests. The trace recorded CUDA kernels. Nsight's CUDA GPU Kernel Summary ranked these kernels by cumulative GPU execution time across the trace:
+
+| Kernel | Total time (ns) | Share of kernel time |
+| --- | ---: | ---: |
+| `vllm::cross_device_reduce_1stage<__nv_bfloat16, 4>` | 66,847,922,806 | 69.6% |
+| `ampere_bf16_s16816gemm_bf16_128x64_sliced1x2_ldg8_f2f_stages_64x6_tn` | 9,590,177,620 | 10.0% |
+| `ampere_bf16_s16816gemm_bf16_64x64_sliced1x2_ldg8_f2f_stages_64x6_tn` | 5,396,774,850 | 5.6% |
+
+The first kernel is vLLM's AllReduce operation for communication among the four tensor-parallel ranks. It accounts for **69.6% of total recorded kernel time**. Kernel time sums execution across GPUs and can exceed the trace's elapsed wall time. This percentage describes the three profiled requests, not the 200-request benchmark from Task 2.
+
+![Nsight Systems CUDA GPU Kernel Summary showing the AllReduce kernel at 69.6% of recorded kernel time](figures/allreduce_kernel.png)
 
 ## Task 5: Experiment
 
