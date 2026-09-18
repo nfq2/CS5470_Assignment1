@@ -64,6 +64,6 @@
     "new_value": 4096,
     "ttft_p99_ms": 321.5772189751431,
     "tpot_p50_ms": 20.787292982705644,
-    "supports_hypothesis": true
+    "supports_hypothesis": false
   }
 }

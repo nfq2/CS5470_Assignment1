@@ -213,7 +213,7 @@ def main():
             "new_value": int(match.group(1)),
             "ttft_p99_ms": metrics["ttft_p99_ms"],
             "tpot_p50_ms": metrics["tpot_p50_ms"],
-            "supports_hypothesis": metrics["ttft_p99_ms"] < baseline_tp4["ttft_p99_ms"],
+            "supports_hypothesis": metrics["tpot_p50_ms"] < baseline_tp4["tpot_p50_ms"],
         }
     else:
         answers.setdefault("baseline", {})[args.run] = metrics
